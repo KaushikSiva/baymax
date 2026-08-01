@@ -82,10 +82,10 @@ def test_scripted_policy_follows_rooms_incidents_and_return_home():
     assert policy.decide(status, (b"", b"")).skill == HospitalSkill.INSPECT_ROOM_1
     status["rooms"]["room_1"]["visited"] = True
     status["pendingIncidents"] = [{"incidentType": "critical_monitor"}]
-    assert policy.decide(status, (b"", b"")).skill == HospitalSkill.DISPATCH_INCIDENT
-    status["pendingIncidents"] = []
     assert policy.decide(status, (b"", b"")).skill == HospitalSkill.NAVIGATE_ROOM_2
     status["rooms"]["room_2"] = {"visited": True, "atInspectionPoint": False}
+    assert policy.decide(status, (b"", b"")).skill == HospitalSkill.DISPATCH_INCIDENT
+    status["pendingIncidents"] = []
     status["atHome"] = False
     assert policy.decide(status, (b"", b"")).skill == HospitalSkill.RETURN_HOME
 
@@ -179,6 +179,9 @@ def test_full_scripted_hospital_patrol_routes_through_doorway_and_dispatches_two
     assert doorway_samples
     assert max(abs(item["robot"][0]) for item in doorway_samples) < 0.48
     assert max(item["robot"][1] for item in trajectory) > 1.75
+    dispatch_samples = [item for item in trajectory if item["dispatchCount"] > 0]
+    assert dispatch_samples
+    assert all(item["room2Visited"] for item in dispatch_samples)
     saved = json.loads((tmp_path / "dispatches.json").read_text())
     assert [item["incidentType"] for item in saved] == [
         "critical_monitor",

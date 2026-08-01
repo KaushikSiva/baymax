@@ -55,8 +55,10 @@ hospital patrol. Choose exactly one next high-level skill from the schema. Visit
 Room 1 before Room 2, stop at each inspection point, assess camera evidence and
 grounded observations, and remain stopped while the Room 1 listening state is
 active. Room 1 monitor readings and the completed patient statement are combined
-into one dispatch. Route through the doorway waypoints, inspect Room 2 near the
-fallen patient, dispatch every pending incident exactly once, then return home.
+into one queued incident. Route through the doorway waypoints and inspect Room 2
+near the fallen patient. Do not choose dispatch_incident until dispatchReady is
+true, meaning both rooms have been inspected. Then dispatch every pending
+incident exactly once and return home.
 If the robot falls, recover. Do not diagnose or recommend treatment. Return only
 the requested JSON."""
 
@@ -83,8 +85,6 @@ class ScriptedHospitalPolicy:
         pending = status["pendingIncidents"]
         if status["fallen"]:
             skill = HospitalSkill.RECOVER
-        elif pending:
-            skill = HospitalSkill.DISPATCH_INCIDENT
         elif not status["rooms"]["room_1"]["visited"]:
             skill = (
                 HospitalSkill.INSPECT_ROOM_1
@@ -97,6 +97,8 @@ class ScriptedHospitalPolicy:
                 if status["rooms"]["room_2"]["atInspectionPoint"]
                 else HospitalSkill.NAVIGATE_ROOM_2
             )
+        elif pending:
+            skill = HospitalSkill.DISPATCH_INCIDENT
         elif not status["atHome"]:
             skill = HospitalSkill.RETURN_HOME
         else:

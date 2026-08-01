@@ -268,6 +268,14 @@ def _schedule_dispatch(
 ) -> None:
     if slot.pending is not None or arena.current_skill != HospitalSkill.DISPATCH_INCIDENT:
         return
+    if not arena.dispatch_ready():
+        arena.current_skill = HospitalSkill.WAIT
+        arena.rationale = "Dispatch deferred until both patient rooms are inspected."
+        arena._event(
+            "incident_dispatch_deferred",
+            {"reason": "both_rooms_not_inspected"},
+        )
+        return
     incident = arena.next_incident()
     if incident is None:
         arena.current_skill = HospitalSkill.WAIT

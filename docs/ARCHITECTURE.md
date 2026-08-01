@@ -22,6 +22,7 @@ sequenceDiagram
         Sim-->>Controller: updated pose and contacts
         Controller->>Sim: policy torques under limits + watchdog
     end
+    Note over Controller,API: Both rooms must be inspected first
     Controller->>API: deduplicated incident JSON
     API-->>Controller: acceptance or retryable failure
 ```
@@ -33,11 +34,12 @@ stateDiagram-v2
     [*] --> NavigateRoom101
     NavigateRoom101 --> ListenAndInspect101: inspection point reached
     ListenAndInspect101 --> ListenAndInspect101: patient still speaking
-    ListenAndInspect101 --> Dispatch101: speech finished or 5s silence
-    Dispatch101 --> NavigateDoorway: accepted
+    ListenAndInspect101 --> Queue101: speech finished or 5s silence
+    Queue101 --> NavigateDoorway: incident held locally
     NavigateDoorway --> InspectRoom202: inspection point reached
-    InspectRoom202 --> Dispatch202: fall evidence grounded
-    Dispatch202 --> ReturnHome: accepted
+    InspectRoom202 --> Dispatch101: both rooms inspected
+    Dispatch101 --> Dispatch202: first incident accepted
+    Dispatch202 --> ReturnHome: second incident accepted
     ReturnHome --> Complete: start position reached
 ```
 
@@ -49,6 +51,7 @@ stateDiagram-v2
 - 120 ms locomotion command watchdog
 - Fall detection and simulation-only recovery
 - Fixed room order and exactly-once incident IDs
+- Hard outbound-dispatch gate until both rooms are inspected
 - `simulationOnly: true` on every dispatch payload
 - No diagnosis or treatment recommendation in the model instruction
 

@@ -249,6 +249,10 @@ class HospitalPatrolArena:
         pending = self.pending_incidents()
         return pending[0] if pending else None
 
+    def dispatch_ready(self) -> bool:
+        """External dispatch is permitted only after every room was inspected."""
+        return all(bool(room["visited"]) for room in self.rooms.values())
+
     def record_dispatch(
         self, incident: dict[str, Any], result: dict[str, Any]
     ) -> None:
@@ -350,6 +354,7 @@ class HospitalPatrolArena:
                 "room_2": {"heartRateBpm": 76, "spo2Percent": 97, "alarm": "normal"},
             },
             "pendingIncidents": self.pending_incidents(),
+            "dispatchReady": self.dispatch_ready(),
             "successfulDispatches": len([item for item in self.dispatches if item["ok"]]),
             "expectedDispatches": 2,
             "bedClearanceM": round(self._bed_clearance_m(), 3),
@@ -413,6 +418,7 @@ class HospitalPatrolArena:
             },
             "incidents": self.incidents,
             "pendingIncidents": self.pending_incidents(),
+            "dispatchReady": self.dispatch_ready(),
             "dispatches": self.dispatches,
             "safety": {
                 "simulationOnly": True,

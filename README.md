@@ -46,8 +46,8 @@ and dispatch deterministic—even when Gemini chooses the next high-level skill.
 | --- | --- | --- |
 | 01 · Room 101 | Routes around collision-enabled furniture and approaches the bedside | No bed or wall penetration |
 | 02 · Listen | Stops while the patient speaks; leaves after speech ends or five seconds of silence | Final transcript is grounded to the encounter |
-| 03 · Escalate | Combines speech with the visible 148 BPM / 82% SpO₂ alarm | One structured critical-monitor POST |
-| 04 · Room 202 | Crosses the centered doorway and approaches a patient lying on the floor | One structured fall POST |
+| 03 · Queue | Combines speech with the visible 148 BPM / 82% SpO₂ alarm | Critical-monitor incident held locally |
+| 04 · Room 202 | Crosses the doorway and inspects Daniel Carter on the floor | Both queued incidents POST only after inspection |
 | 05 · Return | Walks back to the start and writes evidence | Replayable events, trajectory, decisions, and API records |
 
 What the deterministic integration test currently proves:
