@@ -40,6 +40,10 @@ ROOM_1_SILENCE_TIMEOUT_S = 5.0
 SCRIPTED_SPEECH_DURATION_S = 4.0
 DOORWAY_WAYPOINT_RADIUS_M = 0.30
 SCRIPTED_PATIENT_PHRASE = "I have severe chest pain and I'm having trouble breathing."
+PATIENT_NAMES = {
+    "patient_101": "Grandma",
+    "patient_202": "Boy",
+}
 ROOM_LOOK_TARGETS = {
     "room_1": (-1.85, -0.90),
     "room_2": (1.65, 2.15),
@@ -385,6 +389,11 @@ class HospitalPatrolArena:
                         ROOM_INSPECTION_POINTS[room_id], INSPECTION_RADIUS_M
                     ),
                     "patientId": "patient_101" if room_id == "room_1" else "patient_202",
+                    "patientName": (
+                        PATIENT_NAMES["patient_101"]
+                        if room_id == "room_1"
+                        else PATIENT_NAMES["patient_202"]
+                    ),
                 }
                 for room_id, state in self.rooms.items()
             },
@@ -648,6 +657,7 @@ class HospitalPatrolArena:
             scenario_id=self.scenario_id,
             room_id=room_id,
             patient_id=patient_id,
+            patient_name=PATIENT_NAMES[patient_id],
             incident_type=incident_type,
             summary=summary,
             evidence=evidence,

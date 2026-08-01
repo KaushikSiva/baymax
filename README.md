@@ -153,6 +153,7 @@ Example Room 101 payload:
 {
   "roomId": "room_1",
   "patientId": "patient_101",
+  "patientName": "Grandma",
   "incidentType": "critical_monitor",
   "severity": "critical",
   "monitorReadings": {

@@ -176,6 +176,7 @@ def test_full_scripted_hospital_patrol_routes_through_doorway_and_dispatches_two
         "patient_fall",
     ]
     room_1_request = saved[0]["request"]
+    assert room_1_request["patientName"] == "Grandma"
     assert room_1_request["monitorReadings"] == {
         "heartRateBpm": 148,
         "spo2Percent": 82,
@@ -186,3 +187,4 @@ def test_full_scripted_hospital_patrol_routes_through_doorway_and_dispatches_two
     )
     assert "Grandma reported" in room_1_request["summary"]
     assert saved[1]["request"]["patientId"] == "patient_202"
+    assert saved[1]["request"]["patientName"] == "Boy"

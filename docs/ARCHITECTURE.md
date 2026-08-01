@@ -65,7 +65,7 @@ one incident rather than two disconnected alerts.
 
 Every dispatch includes:
 
-- stable incident, scenario, room, and patient identifiers
+- stable incident, scenario, room, and patient identifiers, plus patient name
 - timestamp, source, severity, robot pose, and evidence list
 - a concise human-readable summary
 - monitor readings and/or completed speech when relevant
