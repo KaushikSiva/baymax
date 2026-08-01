@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use Baymax Forward-Deployed Nurse in research, please cite this repository."
+title: "Baymax Forward-Deployed Nurse"
+type: software
+authors:
+  - family-names: "Sivakumar"
+    given-names: "Kaushik"
+repository-code: "https://github.com/KaushikSiva/baymax"
+url: "https://github.com/KaushikSiva/baymax"
+version: 0.1.0
+date-released: 2026-08-01
+keywords:
+  - embodied AI
+  - healthcare robotics
+  - humanoid robotics
+  - MuJoCo
+  - Unitree G1

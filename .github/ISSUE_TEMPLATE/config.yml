@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/KaushikSiva/baymax/discussions
+    about: Use Discussions for support and open-ended design conversation.
+  - name: Security vulnerability
+    url: https://github.com/KaushikSiva/baymax/security/advisories/new
+    about: Report vulnerabilities privately.
