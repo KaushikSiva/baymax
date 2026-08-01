@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Baymax // Forward-Deployed Nurse</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="brand"><b>BAYMAX</b><span>/</span>FORWARD-DEPLOYED NURSE</div>
+        <div class="connection"><i></i><span id="connection">CONNECTING</span></div>
+      </header>
+
+      <section class="workspace">
+        <div class="scene">
+          <img id="broadcast" alt="Live two-room hospital patrol simulation" />
+          <div class="scene-wash"></div>
+          <div class="mission">
+            <p>CLINICAL G1 · TWO-ROOM ROUND</p>
+            <h1 id="phase">STARTING PATROL</h1>
+            <span id="rationale">Waiting for the first grounded navigation decision.</span>
+          </div>
+          <div class="room-indicator">
+            <small>CURRENT ZONE</small>
+            <strong id="zone">CORRIDOR</strong>
+          </div>
+        </div>
+
+        <aside class="incident-rail">
+          <div class="rail-heading">
+            <p>DISPATCH FEED</p>
+            <strong id="dispatch-count">0 / 2</strong>
+          </div>
+          <ol id="incidents" aria-live="polite">
+            <li class="empty">No incidents dispatched.</li>
+          </ol>
+          <p class="disclosure">SIMULATION ONLY<br />NOT MEDICAL GUIDANCE</p>
+        </aside>
+      </section>
+
+      <section class="operations">
+        <div class="patrol">
+          <p>PATROL SEQUENCE</p>
+          <ol>
+            <li data-step="navigate_room_1"><b>01</b><span>ROOM 101</span></li>
+            <li data-step="inspect_room_1"><b>02</b><span>ASSESS</span></li>
+            <li data-step="navigate_room_2"><b>03</b><span>ROOM 202</span></li>
+            <li data-step="inspect_room_2"><b>04</b><span>ASSESS</span></li>
+            <li data-step="return_home"><b>05</b><span>RETURN</span></li>
+          </ol>
+        </div>
+
+        <div class="patient-context">
+          <div class="vitals">
+            <span>ROOM 101</span>
+            <strong><i>148</i> BPM</strong>
+            <em>SpO₂ 82%</em>
+          </div>
+          <div class="speech">
+            <span>PATIENT VOICE</span>
+            <p id="transcript">Waiting for patient speech.</p>
+            <form id="transcript-form">
+              <input id="transcript-input" aria-label="Patient transcript" placeholder="Type patient statement…" />
+              <button type="submit">SEND</button>
+              <button type="button" id="mic" aria-label="Start microphone">MIC</button>
+            </form>
+          </div>
+        </div>
+
+        <figure class="ego">
+          <img id="ego" alt="Unitree G1 ego camera" />
+          <figcaption>G1 EGO / GEMINI ROBOTICS-ER</figcaption>
+        </figure>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

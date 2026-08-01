@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "baymax-forward-deployed-nurse"
+version = "0.1.0"
+description = "Unitree G1 hospital patrol and clinical escalation simulation"
+requires-python = ">=3.11"
+dependencies = [
+  "mujoco>=3.3,<4",
+  "google-genai>=1.0",
+  "pydantic>=2.7,<3",
+  "PyYAML>=6.0",
+  "numpy>=1.26,<3",
+  "Pillow>=10.0",
+  "websockets>=14,<17",
+  "torch>=2.2,<3",
+]
+
+[tool.setuptools.packages.find]
+include = ["baymax_nurse*"]
+
+[tool.setuptools.package-data]
+baymax_nurse = ["web/*.html", "web/*.js", "web/*.css"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

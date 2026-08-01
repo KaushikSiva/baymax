@@ -1,0 +1,205 @@
+from __future__ import annotations
+
+from collections import deque
+from dataclasses import asdict, dataclass
+from typing import Any
+
+import numpy as np
+
+from baymax_nurse.runtime.transport import DryRunTransport
+
+
+@dataclass
+class ChannelMetrics:
+    requested: int = 0
+    transmitted: int = 0
+    dropped: int = 0
+    delivered: int = 0
+    watchdog_stops: int = 0
+    clipped: int = 0
+
+
+class SDKCompatibleCommandChannel:
+    def __init__(
+        self,
+        player_id: str,
+        rng: np.random.Generator,
+        *,
+        rate_hz: float = 50.0,
+        latency_range_s: tuple[float, float] = (0.04, 0.08),
+        dropout_probability: float = 0.02,
+        watchdog_s: float = 0.12,
+        velocity_limits: tuple[float, float, float] = (0.52, 0.26, 0.90),
+        slew_per_packet: tuple[float, float, float] = (0.08, 0.06, 0.16),
+    ) -> None:
+        self.player_id = player_id
+        self.rng = rng
+        self.period_s = 1.0 / rate_hz
+        self.latency_range_s = latency_range_s
+        self.dropout_probability = dropout_probability
+        self.watchdog_s = watchdog_s
+        self.transport = DryRunTransport()
+        self.transport.initialize()
+        self.limits = np.asarray(velocity_limits, dtype=np.float32)
+        self.slew_per_packet = np.asarray(slew_per_packet, dtype=np.float32)
+        self.desired = np.zeros(3, dtype=np.float32)
+        self.active = np.zeros(3, dtype=np.float32)
+        self._last_sample = np.zeros(3, dtype=np.float32)
+        self._next_sample_s: float | None = None
+        self._last_delivery_s = 0.0
+        self._request_fresh = False
+        self._watchdog_active = False
+        self._packets: deque[tuple[float, np.ndarray]] = deque()
+        self.metrics = ChannelMetrics()
+        self.trace: list[dict[str, object]] = []
+
+    def request(self, vx: float, vy: float, yaw_rate: float) -> None:
+        requested = np.asarray([vx, vy, yaw_rate], dtype=np.float32)
+        if not np.all(np.isfinite(requested)):
+            raise ValueError("SDK command must contain finite values")
+        self.desired = requested
+        self._request_fresh = True
+        self.metrics.requested += 1
+
+    def tick(self, simulation_time_s: float) -> np.ndarray:
+        if self._next_sample_s is None:
+            self._next_sample_s = simulation_time_s
+        while simulation_time_s + 1e-9 >= self._next_sample_s:
+            if self._request_fresh:
+                self._sample_packet(self._next_sample_s)
+                self._request_fresh = False
+            self._next_sample_s += self.period_s
+        while self._packets and self._packets[0][0] <= simulation_time_s + 1e-9:
+            _, self.active = self._packets.popleft()
+            self._last_delivery_s = simulation_time_s
+            self.metrics.delivered += 1
+        if simulation_time_s - self._last_delivery_s > self.watchdog_s:
+            if np.any(self.active):
+                self.metrics.watchdog_stops += 1
+            if not self._watchdog_active:
+                self.transport.stop(self.period_s)
+                self._watchdog_active = True
+            self.active = np.zeros(3, dtype=np.float32)
+        else:
+            self._watchdog_active = False
+        return self.active.copy()
+
+    def report(self) -> dict[str, object]:
+        return {
+            **asdict(self.metrics),
+            "rateHz": round(1.0 / self.period_s, 2),
+            "latencyRangeMs": [round(1000 * value, 1) for value in self.latency_range_s],
+            "dropoutProbability": self.dropout_probability,
+            "watchdogMs": round(1000 * self.watchdog_s, 1),
+            "transportBackend": self.transport.backend_name,
+            "velocityLimits": self.limits.tolist(),
+            "slewPerPacket": self.slew_per_packet.tolist(),
+            "activeCommand": self.active.tolist(),
+        }
+
+    def _sample_packet(self, sample_time_s: float) -> None:
+        clipped = np.clip(self.desired, -self.limits, self.limits)
+        if not np.allclose(clipped, self.desired):
+            self.metrics.clipped += 1
+        delta = np.clip(
+            clipped - self._last_sample, -self.slew_per_packet, self.slew_per_packet
+        )
+        command = np.round((self._last_sample + delta) / 0.005) * 0.005
+        self._last_sample = command.astype(np.float32)
+        if self.rng.random() < self.dropout_probability:
+            self.metrics.dropped += 1
+            self.trace.append(
+                {"sampleTime": round(sample_time_s, 4), "status": "dropped", "command": command.tolist()}
+            )
+            return
+        delivery_s = sample_time_s + float(self.rng.uniform(*self.latency_range_s))
+        self._packets.append((delivery_s, command.copy()))
+        vx, vy, yaw_rate = (float(value) for value in command)
+        self.transport.set_velocity(vx, vy, yaw_rate, self.period_s)
+        self.metrics.transmitted += 1
+        self.trace.append(
+            {
+                "sampleTime": round(sample_time_s, 4),
+                "deliveryTime": round(delivery_s, 4),
+                "status": "queued",
+                "command": command.tolist(),
+            }
+        )
+
+
+class ConstrainedLocomotion:
+    def __init__(
+        self,
+        base: Any,
+        model: Any,
+        data: Any,
+        rng: np.random.Generator,
+        *,
+        motor_strength: dict[str, float],
+        dropout_probability: float,
+        joint_position_noise_rad: float,
+        joint_velocity_noise_rps: float,
+        velocity_limits: tuple[float, float, float],
+        slew_per_packet: tuple[float, float, float],
+        player_ids: tuple[str, ...] = ("p1",),
+    ) -> None:
+        self.base = base
+        self.model = model
+        self.data = data
+        self.rng = rng
+        self.motor_strength = motor_strength
+        self.joint_position_noise_rad = joint_position_noise_rad
+        self.joint_velocity_noise_rps = joint_velocity_noise_rps
+        self.player_ids = tuple(player_ids)
+        self.channels = {
+            player_id: SDKCompatibleCommandChannel(
+                player_id,
+                rng,
+                dropout_probability=dropout_probability,
+                velocity_limits=velocity_limits,
+                slew_per_packet=slew_per_packet,
+            )
+            for player_id in self.player_ids
+        }
+
+    @property
+    def decimation(self) -> int:
+        return self.base.decimation
+
+    def set_command(self, player_id: str, vx: float, vy: float, yaw_rate: float) -> None:
+        self.channels[player_id].request(vx, vy, yaw_rate)
+
+    def update(self, simulation_time_s: float) -> None:
+        for player_id, channel in self.channels.items():
+            self.base.set_command(player_id, *channel.tick(simulation_time_s))
+        qpos = self.data.qpos.copy()
+        qvel = self.data.qvel.copy()
+        try:
+            q_ids = self.base._leg_qpos["p1"]
+            dq_ids = self.base._leg_dof["p1"]
+            self.data.qpos[q_ids] += self.rng.normal(
+                0.0, self.joint_position_noise_rad, len(q_ids)
+            )
+            self.data.qvel[dq_ids] += self.rng.normal(
+                0.0, self.joint_velocity_noise_rps, len(dq_ids)
+            )
+            self.base.update(simulation_time_s)
+        finally:
+            self.data.qpos[:] = qpos
+            self.data.qvel[:] = qvel
+
+    def apply_torques(self) -> None:
+        self.base.apply_torques()
+        actuator_ids = self.base._leg_actuator["p1"]
+        noise = self.rng.normal(1.0, 0.008, len(actuator_ids))
+        self.data.ctrl[actuator_ids] *= self.motor_strength["p1"] * noise
+
+    def report(self) -> dict[str, object]:
+        return {
+            "p1": {
+                **self.channels["p1"].report(),
+                "motorStrengthScale": self.motor_strength["p1"],
+                "jointPositionNoiseRad": self.joint_position_noise_rad,
+                "jointVelocityNoiseRps": self.joint_velocity_noise_rps,
+            }
+        }

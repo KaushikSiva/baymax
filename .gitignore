@@ -1,0 +1,21 @@
+.DS_Store
+.env
+.idea/
+.vscode/
+.pytest_cache/
+.venv
+__pycache__/
+*.py[cod]
+*.log
+MUJOCO_LOG.TXT
+
+outputs/*
+!outputs/.gitkeep
+
+# Reproducibly downloaded official robot assets and policy.
+assets/mujoco_menagerie
+vendor/unitree_rl_gym
+
+# Generated from user-supplied hospital asset packs; license before sharing.
+baymax_nurse/assets/local
+*.fbx
