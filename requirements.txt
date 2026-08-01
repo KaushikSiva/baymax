@@ -6,4 +6,4 @@ numpy>=1.26,<3
 Pillow>=10.0
 websockets>=14,<17
 torch>=2.2,<3
-pytest>=8.2
+pytest>=9.1.1
