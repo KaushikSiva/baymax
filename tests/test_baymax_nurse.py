@@ -29,6 +29,7 @@ def test_hospital_model_contains_one_g1_two_rooms_and_patient_evidence():
     assert model.geom("room_1_left_rail").id >= 0
     assert model.geom("room_1_monitor_screen").id >= 0
     assert model.geom("patient_202_collision").id >= 0
+    assert model.geom("room_2_old_man_collision").id >= 0
     for name in (
         "room_1_bed_collision",
         "room_1_mattress",
@@ -37,6 +38,7 @@ def test_hospital_model_contains_one_g1_two_rooms_and_patient_evidence():
         "room_1_left_rail",
         "room_1_right_rail",
         "patient_202_collision",
+        "room_2_old_man_collision",
     ):
         geom = model.geom(name)
         assert model.geom_contype[geom.id] == 4
@@ -47,6 +49,27 @@ def test_hospital_model_contains_one_g1_two_rooms_and_patient_evidence():
         assert boy.id >= 0
         data = mujoco.MjData(model)
         mujoco.mj_forward(model, data)
+        if "old_man_standing" in json.loads(
+            default_asset_manifest().read_text(encoding="utf-8")
+        )["assets"]:
+            old_man = model.geom("room_2_old_man_detailed")
+            assert old_man.id >= 0
+            old_man_mesh_id = model.geom_dataid[old_man.id]
+            old_man_vertex_address = model.mesh_vertadr[old_man_mesh_id]
+            old_man_vertex_count = model.mesh_vertnum[old_man_mesh_id]
+            old_man_vertices = model.mesh_vert[
+                old_man_vertex_address : old_man_vertex_address + old_man_vertex_count
+            ]
+            old_man_world_vertices = (
+                old_man_vertices @ data.geom_xmat[old_man.id].reshape(3, 3).T
+                + data.geom_xpos[old_man.id]
+            )
+            assert old_man_world_vertices[:, 2].min() >= -0.001
+            assert old_man_world_vertices[:, 2].max() < 1.9
+            assert old_man_world_vertices[:, 0].min() > 2.0
+            assert old_man_world_vertices[:, 0].max() < 3.5
+        else:
+            assert model.geom("room_2_old_man_torso_proxy").id >= 0
         mesh_id = model.geom_dataid[boy.id]
         vertex_address = model.mesh_vertadr[mesh_id]
         vertex_count = model.mesh_vertnum[mesh_id]
@@ -62,6 +85,7 @@ def test_hospital_model_contains_one_g1_two_rooms_and_patient_evidence():
     else:
         assert model.geom("patient_101_torso_proxy").id >= 0
         assert model.geom("patient_202_torso_proxy").id >= 0
+        assert model.geom("room_2_old_man_torso_proxy").id >= 0
     with pytest.raises(KeyError):
         model.joint("p2_floating_base_joint")
 

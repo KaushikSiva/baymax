@@ -365,6 +365,13 @@ def _add_room_contents(
         PATIENT_POSITIONS["patient_202"],
         "0.7071068 0.7071068 0 0",
     )
+    _visual_geom(
+        worldbody,
+        prepared,
+        "old_man_standing",
+        "room_2_old_man_detailed",
+        (2.68, 3.28, 0.0),
+    )
     if "grandma_sitting" not in prepared:
         ET.SubElement(
             worldbody,
@@ -412,6 +419,41 @@ def _add_room_contents(
             contype="0",
             conaffinity="0",
         )
+    if "old_man_standing" not in prepared:
+        ET.SubElement(
+            worldbody,
+            "geom",
+            name="room_2_old_man_torso_proxy",
+            type="capsule",
+            pos="2.68 3.28 1.02",
+            size="0.20 0.48",
+            material="hospital_gown",
+            contype="0",
+            conaffinity="0",
+        )
+        ET.SubElement(
+            worldbody,
+            "geom",
+            name="room_2_old_man_head_proxy",
+            type="sphere",
+            pos="2.68 3.28 1.66",
+            size="0.14",
+            material="hospital_skin",
+            contype="0",
+            conaffinity="0",
+        )
+    ET.SubElement(
+        worldbody,
+        "geom",
+        name="room_2_old_man_collision",
+        type="capsule",
+        pos="2.68 3.28 0.88",
+        size="0.23 0.62",
+        rgba="0 0 0 0",
+        friction="0.95 0.02 0.002",
+        contype="4",
+        conaffinity="3",
+    )
     # Invisible body proxy gives the fallen patient physical occupancy without
     # making the high-detail visual mesh authoritative for contact.
     ET.SubElement(

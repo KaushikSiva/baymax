@@ -76,6 +76,13 @@ def extract_archives(source_dir: Path, work_dir: Path) -> dict[str, Path]:
     if not boy.is_file():
         raise FileNotFoundError(f"Missing hospital patient asset: {boy}")
     roots["boy"] = boy
+    old_man_candidates = sorted((source_dir / "oldman" / "source").glob("*.fbx"))
+    if len(old_man_candidates) != 1:
+        raise RuntimeError(
+            "Expected exactly one old-man FBX in "
+            f"{source_dir / 'oldman' / 'source'}, found {len(old_man_candidates)}"
+        )
+    roots["old_man"] = old_man_candidates[0]
     return roots
 
 
@@ -115,9 +122,29 @@ def select_meshes(kind: str) -> list[bpy.types.Object]:
         meshes = [obj for obj in meshes if obj.name != "Cube_002"]
     elif kind == "boy":
         meshes = [obj for obj in meshes if is_skinned(obj)]
+    elif kind == "old_man":
+        meshes = [obj for obj in meshes if is_skinned(obj)]
     if not meshes:
         raise RuntimeError(f"No usable meshes found for {kind}")
     return meshes
+
+
+def pose_old_man() -> None:
+    armatures = [obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE"]
+    if len(armatures) != 1:
+        raise RuntimeError(f"Expected one old-man armature, found {len(armatures)}")
+    armature = armatures[0]
+    armature.animation_data_clear()
+    for bone_name, angle in (
+        ("CC_Base_L_Upperarm", math.radians(-55)),
+        ("CC_Base_R_Upperarm", math.radians(55)),
+    ):
+        bone = armature.pose.bones.get(bone_name)
+        if bone is None:
+            raise RuntimeError(f"Old-man armature is missing {bone_name}")
+        bone.rotation_mode = "XYZ"
+        bone.rotation_euler.z = angle
+    bpy.context.view_layer.update()
 
 
 def join_meshes(meshes: list[bpy.types.Object]) -> bpy.types.Object:
@@ -163,7 +190,11 @@ def normalize(
     elif kind == "monitor":
         scale = 0.46 / max(dimensions)
     else:
-        target_height = 1.55 if kind == "grandma" else 1.45
+        target_height = {
+            "grandma": 1.55,
+            "boy": 1.45,
+            "old_man": 1.70,
+        }[kind]
         scale = target_height / max(dimensions.z, 1e-6)
     obj.scale = (scale, scale, scale)
     bpy.context.view_layer.objects.active = obj
@@ -213,6 +244,7 @@ def normalize_exported_obj(path: Path, kind: str) -> None:
         "monitor": 0.46,
         "grandma": 1.55,
         "boy": 1.45,
+        "old_man": 1.70,
     }[kind]
     denominator = (
         max(dimensions[0], dimensions[1])
@@ -253,6 +285,8 @@ def convert(
     patient_rotation: tuple[float, float, float] | None = None,
 ) -> int:
     import_asset(source)
+    if kind == "old_man":
+        pose_old_man()
     obj = join_meshes(select_meshes(kind))
     normalize(obj, kind, patient_rotation=patient_rotation)
     triangles = export_obj(obj, output)
@@ -309,6 +343,11 @@ def main() -> None:
                 "boy",
                 patient_rotation=(math.pi / 2, 0.0, math.radians(12)),
             ),
+            "old_man_standing": convert(
+                sources["old_man"],
+                output_dir / "old_man_standing.obj",
+                "old_man",
+            ),
         }
         texture_files: dict[str, str] = {}
         for asset_name, filename in TEXTURES.items():
@@ -334,6 +373,11 @@ def main() -> None:
             "rgba": [1.0, 1.0, 1.0, 1.0],
             "triangles": triangles[name],
         }
+    assets["old_man_standing"] = {
+        "mesh": "old_man_standing.obj",
+        "rgba": [0.48, 0.58, 0.64, 1.0],
+        "triangles": triangles["old_man_standing"],
+    }
     # The source character was authored oversized relative to the hospital bed.
     # Keep her original seated pose but bring her to a believable seated scale.
     assets["grandma_sitting"]["scale"] = [0.72, 0.72, 0.72]
@@ -345,7 +389,12 @@ def main() -> None:
         "archives": {
             filename: sha256(source_dir / filename) for filename in ARCHIVES.values()
         },
-        "standaloneSources": {"boy.glb": sha256(source_dir / "boy.glb")},
+        "standaloneSources": {
+            "boy.glb": sha256(source_dir / "boy.glb"),
+            str(sources["old_man"].relative_to(source_dir)): sha256(
+                sources["old_man"]
+            ),
+        },
         "assets": assets,
     }
     (output_dir / "manifest.json").write_text(

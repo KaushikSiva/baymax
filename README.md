@@ -131,6 +131,7 @@ medical-examination-bed-game-ready-asset.zip
 aero-monitor.zip
 grandma-on-bench-free.zip
 boy.glb
+oldman/source/Commission Mr_ John Herbert Family Guy Realistic 1_0.fbx
 ```
 
 Install Blender, then launch normally. The launcher prepares the files into an
