@@ -25,4 +25,4 @@ jobs:
       - name: Check shell syntax
         run: bash -n scripts/*.sh
       - name: Run portable tests
-        run: pytest -q
+        run: python -m pytest -q
