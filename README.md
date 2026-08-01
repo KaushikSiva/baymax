@@ -2,10 +2,11 @@
   <img src="docs/media/baymax-hero.png" alt="A humanoid clinical robot performing a two-room hospital safety round" width="100%" />
 </p>
 
-<h1 align="center">Baymax Forward-Deployed Nurse</h1>
+<h1 align="center">Baymax</h1>
 
 <p align="center">
-  <strong>A Unitree G1 that walks the floor, listens, observes, and escalates.</strong><br />
+  <strong>Forward-Deployed Nurse</strong><br />
+  A Unitree G1 that walks the floor, listens, observes, and escalates.<br />
   An embodied-AI hospital simulation powered by MuJoCo, Gemini Robotics-ER,
   patient speech, and structured incident dispatch.
 </p>

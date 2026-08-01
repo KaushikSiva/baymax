@@ -1,6 +1,6 @@
 cff-version: 1.2.0
-message: "If you use Baymax Forward-Deployed Nurse in research, please cite this repository."
-title: "Baymax Forward-Deployed Nurse"
+message: "If you use Baymax in research, please cite this repository."
+title: "Baymax"
 type: software
 authors:
   - family-names: "Sivakumar"
