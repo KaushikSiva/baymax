@@ -347,7 +347,7 @@ def _add_room_contents(
             (monitor_pos[0], monitor_pos[1], monitor_pos[2] - 0.17),
             "0.7071068 0 0 0.7071068",
         )
-    # Grandma retains the source asset's natural seated pose on the mattress.
+    # Eleanor retains the source asset's natural seated pose on the mattress.
     _visual_geom(
         worldbody,
         prepared,

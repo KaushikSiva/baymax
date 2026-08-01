@@ -41,8 +41,8 @@ SCRIPTED_SPEECH_DURATION_S = 4.0
 DOORWAY_WAYPOINT_RADIUS_M = 0.30
 SCRIPTED_PATIENT_PHRASE = "I have severe chest pain and I'm having trouble breathing."
 PATIENT_NAMES = {
-    "patient_101": "Grandma",
-    "patient_202": "Boy",
+    "patient_101": "Eleanor Brooks",
+    "patient_202": "Daniel Carter",
 }
 ROOM_LOOK_TARGETS = {
     "room_1": (-1.85, -0.90),
@@ -557,19 +557,19 @@ class HospitalPatrolArena:
         if self.speech_mode == "scripted" and self.patient_transcript:
             if elapsed < SCRIPTED_SPEECH_DURATION_S:
                 self.rationale = (
-                    "Grandma is speaking; G1 is stopped and listening until she finishes."
+                    "Eleanor Brooks is speaking; G1 is stopped and listening until she finishes."
                 )
                 return False
         elif self.patient_speaking:
             self.rationale = (
-                "Grandma is speaking; G1 is stopped and listening until she finishes."
+                "Eleanor Brooks is speaking; G1 is stopped and listening until she finishes."
             )
             return False
         elif not (self.patient_transcript and self.patient_speech_final):
             if elapsed < ROOM_1_SILENCE_TIMEOUT_S:
                 remaining = max(0.0, ROOM_1_SILENCE_TIMEOUT_S - elapsed)
                 self.rationale = (
-                    f"Listening for Grandma; silence timeout in {remaining:.1f} seconds."
+                    f"Listening for Eleanor Brooks; silence timeout in {remaining:.1f} seconds."
                 )
                 return False
             self.room_1_listening_outcome = "silence_timeout"
@@ -585,7 +585,9 @@ class HospitalPatrolArena:
                 "transcript": self.patient_transcript,
             },
         )
-        self.rationale = "Grandma's listening window is complete; assessing Room 101."
+        self.rationale = (
+            "The listening window for Eleanor Brooks is complete; assessing Room 101."
+        )
         return True
 
     def _discover_room_1(self) -> None:
@@ -606,7 +608,7 @@ class HospitalPatrolArena:
             evidence.append(f"Patient said: {self.patient_transcript}")
             summary = (
                 "Room 101 critical monitor: heart rate 148 BPM and SpO2 82%. "
-                f"Grandma reported: {self.patient_transcript}"
+                f"Eleanor Brooks reported: {self.patient_transcript}"
             )
         else:
             evidence.append("No patient speech during the five-second listening window")
@@ -633,7 +635,7 @@ class HospitalPatrolArena:
             room_id="room_2",
             patient_id="patient_202",
             incident_type=IncidentType.PATIENT_FALL,
-            summary="Patient is visibly lying on the floor beside the hospital bed.",
+            summary="Daniel Carter is visibly lying on the floor beside the hospital bed.",
             evidence=["Human form detected on floor", "Patient is outside bed footprint"],
             source="camera_vision",
         )

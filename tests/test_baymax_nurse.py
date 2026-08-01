@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from baymax_nurse.arena import HospitalPatrolArena
-from baymax_nurse.cli import parse_args, run
+from baymax_nurse.cli import BAYMAX_MONITOR_EVENT_URL, parse_args, run
 from baymax_nurse.dispatch import DummyDispatchReceiver, HospitalDispatchClient
 from baymax_nurse.model import default_asset_manifest, build_hospital_xml
 from baymax_nurse.policy import ScriptedHospitalPolicy
@@ -107,6 +107,15 @@ def test_dummy_dispatch_receiver_accepts_structured_http_post():
         receiver.close()
 
 
+def test_baymax_api_flag_selects_the_deployed_monitor_endpoint():
+    args = parse_args(["--baymax-api"])
+
+    assert args.baymax_api is True
+    assert BAYMAX_MONITOR_EVENT_URL == (
+        "https://baymax-jet.vercel.app/api/robot/monitor-event"
+    )
+
+
 def test_room_1_waits_for_speech_to_finish_even_after_silence_deadline():
     pytest.importorskip("mujoco")
     arena = HospitalPatrolArena(speech_mode="browser")
@@ -176,7 +185,7 @@ def test_full_scripted_hospital_patrol_routes_through_doorway_and_dispatches_two
         "patient_fall",
     ]
     room_1_request = saved[0]["request"]
-    assert room_1_request["patientName"] == "Grandma"
+    assert room_1_request["patientName"] == "Eleanor Brooks"
     assert room_1_request["monitorReadings"] == {
         "heartRateBpm": 148,
         "spo2Percent": 82,
@@ -185,6 +194,6 @@ def test_full_scripted_hospital_patrol_routes_through_doorway_and_dispatches_two
     assert room_1_request["patientSpeech"]["transcript"].startswith(
         "I have severe chest pain"
     )
-    assert "Grandma reported" in room_1_request["summary"]
+    assert "Eleanor Brooks reported" in room_1_request["summary"]
     assert saved[1]["request"]["patientId"] == "patient_202"
-    assert saved[1]["request"]["patientName"] == "Boy"
+    assert saved[1]["request"]["patientName"] == "Daniel Carter"

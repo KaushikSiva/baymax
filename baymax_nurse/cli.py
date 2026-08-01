@@ -21,6 +21,9 @@ from baymax_nurse.policy import HospitalPolicy, build_hospital_policy
 from baymax_nurse.schemas import HospitalDecision, HospitalSkill, MatchPhase
 
 
+BAYMAX_MONITOR_EVENT_URL = "https://baymax-jet.vercel.app/api/robot/monitor-event"
+
+
 @dataclass
 class PolicySlot:
     adapter: HospitalPolicy
@@ -46,6 +49,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--dispatch-url",
         default=os.getenv("BAYMAX_DISPATCH_URL")
         or os.getenv("HOSPITAL_DISPATCH_URL"),
+    )
+    parser.add_argument(
+        "--baymax-api",
+        action="store_true",
+        help=(
+            "Dispatch to the deployed Baymax monitor-event API. This may create "
+            "records and initiate a doctor call."
+        ),
     )
     parser.add_argument("--dispatch-port", type=int, default=8091)
     parser.add_argument("--asset-manifest", type=Path)
@@ -80,7 +91,13 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     policy_slot = PolicySlot(adapter=policy)
     dispatch_slot = DispatchSlot()
     receiver: DummyDispatchReceiver | None = None
-    if args.dispatch_url:
+    if args.validate_only:
+        receiver = DummyDispatchReceiver(host=args.host, port=args.dispatch_port)
+        receiver.start()
+        dispatch_url = receiver.url
+    elif args.baymax_api:
+        dispatch_url = BAYMAX_MONITOR_EVENT_URL
+    elif args.dispatch_url:
         dispatch_url = args.dispatch_url
     else:
         receiver = DummyDispatchReceiver(host=args.host, port=args.dispatch_port)

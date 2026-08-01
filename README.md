@@ -139,8 +139,19 @@ Without these files, collision-safe procedural patients and furniture are used.
 
 ## Connect an API
 
-Leave `BAYMAX_DISPATCH_URL` blank to use the built-in receiver, or point it at
-your own service:
+Leave `BAYMAX_DISPATCH_URL` blank to use the built-in receiver, point it at your
+own service, or explicitly select the deployed Baymax API:
+
+```bash
+scripts/run_baymax.sh gemini --speech-mode browser --baymax-api
+```
+
+> [!WARNING]
+> The deployed endpoint can create patient/encounter/observation/task records
+> and initiate a real doctor call. Use `--baymax-api` only when you intend those
+> external actions. Headless validation always uses the local dummy receiver.
+
+For a custom endpoint:
 
 ```bash
 export BAYMAX_DISPATCH_URL="http://127.0.0.1:9000/incidents"
@@ -153,7 +164,7 @@ Example Room 101 payload:
 {
   "roomId": "room_1",
   "patientId": "patient_101",
-  "patientName": "Grandma",
+  "patientName": "Eleanor Brooks",
   "incidentType": "critical_monitor",
   "severity": "critical",
   "monitorReadings": {
@@ -168,6 +179,9 @@ Example Room 101 payload:
   "simulationOnly": true
 }
 ```
+
+On acceptance, the deployed API returns the created patient, encounter,
+observation, and task IDs, plus the doctor-call SID and clinician dashboard URL.
 
 ## Evidence, not vibes
 
